@@ -4,8 +4,8 @@ import 'package:openchess/src/chess/pieces/piece.dart';
 class OccupiedTile extends Tile {
   Piece occupiedPiece;
 
-  OccupiedTile({int tileCoordinates, Piece occupiedPiece})
-      : super(tileCoordinates: tileCoordinates) {
+  OccupiedTile({int tileCoordinates, Piece occupiedPiece, bool isSelected})
+      : super(tileCoordinates: tileCoordinates, isSelected: isSelected) {
         this.occupiedPiece = occupiedPiece;
       }
 

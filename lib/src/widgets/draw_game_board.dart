@@ -20,7 +20,7 @@ class DrawGameBoard extends StatelessWidget {
           return snapshot.hasData
               ? Transform.rotate(
                   angle: true ? 0 : -pi,
-                  child: buildTable(snapshot, sizeOfBoard),
+                  child: buildTable(snapshot, sizeOfBoard, gameStateBloc),
                 )
               : Container(
                   child: Text("Nothing yet"),
@@ -28,7 +28,7 @@ class DrawGameBoard extends StatelessWidget {
         });
   }
 
-  Widget buildTable(snapshot, sizeOfBoard) {
+  Widget buildTable(snapshot, sizeOfBoard, gameStateBloc) {
     int listIndex = 0;
     return Table(
       children: snapshot.data.reversed.map<TableRow>((list) {
@@ -37,35 +37,45 @@ class DrawGameBoard extends StatelessWidget {
         return TableRow(
           children: list.map<Widget>((element) {
             elementIndex += 1;
-            return Container(
-              constraints: BoxConstraints(
-                maxHeight: sizeOfBoard,
-                maxWidth: sizeOfBoard,
-                minWidth: sizeOfBoard,
-                minHeight: sizeOfBoard,
-              ),
-              child: element is EmptyTile
-                  ? null
-                  : Center(
-                      child: Transform.rotate(
-                          angle:
-                              element.getPiece().getAlliance() == Alliance.WHITE
-                                  ? 0
-                                  : -pi,
-                          child: Text(
-                            getCodeFromPlaceHolder(element),
-                            style: TextStyle(
-                              fontSize: 40.0,
-                              color: Colors.black,
-                            ),
-                          ))),
-              color: (listIndex + elementIndex) % 2 == 0
-                  ? Colors.blue[100]
-                  : Colors.blue,
+            return GestureDetector(
+              onTap: () => gameStateBloc.findAllPossibleMovesFrom(element),
+              child:
+                  drawChessTile(sizeOfBoard, element, listIndex, elementIndex),
             );
           }).toList(),
         );
       }).toList(),
+    );
+  }
+
+  Container drawChessTile(
+      sizeOfBoard, element, int listIndex, int elementIndex) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: sizeOfBoard,
+        maxWidth: sizeOfBoard,
+        minWidth: sizeOfBoard,
+        minHeight: sizeOfBoard,
+      ),
+      child: element is EmptyTile
+          ? null
+          : Center(
+              child: Transform.rotate(
+                  angle: element.getPiece().getAlliance() == Alliance.WHITE
+                      ? 0
+                      : -pi,
+                  child: Text(
+                    getCodeFromPlaceHolder(element),
+                    style: TextStyle(
+                      fontSize: 40.0,
+                      color: Colors.black,
+                    ),
+                  ))),
+      color: element.getSelected()
+          ? Colors.orange[300]
+          : ((listIndex + elementIndex) % 2 == 0
+              ? Colors.blue[100]
+              : Colors.blue),
     );
   }
 
