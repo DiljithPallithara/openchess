@@ -16,8 +16,6 @@ class Knight extends Piece {
             board.getTile(pos).getPiece().pieceAlliance != pieceAlliance)
         .where((pos) => board.validateMove(piecePosition, pos))
         .map((pos) => Move(
-            movedPiece: this,
-            capturedPiece: board.getTile(pos).getPiece(),
             previousCoordinate: piecePosition,
             newCoordinate: pos))
         .toList();

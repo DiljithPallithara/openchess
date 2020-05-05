@@ -19,5 +19,9 @@ abstract class Tile {
     return isSelected;
   }
 
+  int getTileCoordinate() {
+    return tileCoordinates;
+  }
+
   Piece getPiece();
 }

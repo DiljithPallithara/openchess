@@ -5,7 +5,11 @@ import 'package:openchess/src/bloc/bloc_provider.dart';
 import 'package:openchess/src/bloc/default_chess_game_bloc.dart';
 import 'package:openchess/src/chess/alliance.dart';
 import 'package:openchess/src/chess/board/empty_tile.dart';
+import 'package:openchess/src/chess/pieces/bishop.dart';
 import 'package:openchess/src/chess/pieces/knight.dart';
+import 'package:openchess/src/chess/pieces/pawn.dart';
+import 'package:openchess/src/chess/pieces/queen.dart';
+import 'package:openchess/src/chess/pieces/rook.dart';
 
 class DrawGameBoard extends StatelessWidget {
   @override
@@ -19,7 +23,7 @@ class DrawGameBoard extends StatelessWidget {
         builder: (_, snapshot) {
           return snapshot.hasData
               ? Transform.rotate(
-                  angle: true ? 0 : -pi,
+                  angle: 1 == 1 ? 0 : -pi,
                   child: buildTable(snapshot, sizeOfBoard, gameStateBloc),
                 )
               : Container(
@@ -28,7 +32,7 @@ class DrawGameBoard extends StatelessWidget {
         });
   }
 
-  Widget buildTable(snapshot, sizeOfBoard, gameStateBloc) {
+  Table buildTable(snapshot, sizeOfBoard, gameStateBloc) {
     int listIndex = 0;
     return Table(
       children: snapshot.data.reversed.map<TableRow>((list) {
@@ -38,7 +42,7 @@ class DrawGameBoard extends StatelessWidget {
           children: list.map<Widget>((element) {
             elementIndex += 1;
             return GestureDetector(
-              onTap: () => gameStateBloc.findAllPossibleMovesFrom(element),
+              onTap: () => gameStateBloc.tapFunction(element),
               child:
                   drawChessTile(sizeOfBoard, element, listIndex, elementIndex),
             );
@@ -74,30 +78,24 @@ class DrawGameBoard extends StatelessWidget {
       color: element.getSelected()
           ? Colors.orange[300]
           : ((listIndex + elementIndex) % 2 == 0
-              ? Colors.blue[100]
-              : Colors.blue),
+              ? Colors.blue
+              : Colors.blue[100]),
     );
   }
 
   String getCodeFromPlaceHolder(element) {
-    if (element.getPiece() is Knight &&
-        element.getPiece().getAlliance() == Alliance.WHITE) {
-      return '\u2658';
-    } else if (element.getPiece() is Knight &&
-        element.getPiece().getAlliance() == Alliance.BLACK) {
-      return '\u265E';
-    } else {
-      return "";
+    if (element.getPiece() is Pawn) {
+      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2659' : '\u265F';
+    } else if (element.getPiece() is Knight) {
+      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2658' : '\u265E';
+    } else if (element.getPiece() is Bishop) {
+      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2657' : '\u265D';
+    }  else if (element.getPiece() is Rook) {
+      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2656' : '\u265C';
+    }  else if (element.getPiece() is Queen) {
+      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2655' : '\u265B';
+    }  else {
+      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2654' : '\u265A';
     }
-// const String DEFAULT_CHESS_GAME_WHITE_PAWN = '\u2659';
-// const String DEFAULT_CHESS_GAME_BLACK_PAWN = '\u265F';
-// const String DEFAULT_CHESS_GAME_WHITE_BISHOP = '\u2657';
-// const String DEFAULT_CHESS_GAME_BLACK_BISHOP = '\u265D';
-// const String DEFAULT_CHESS_GAME_WHITE_ROOK = '\u2656';
-// const String DEFAULT_CHESS_GAME_BLACK_ROOK = '\u265C';
-// const String DEFAULT_CHESS_GAME_WHITE_QUEEN = '\u2655';
-// const String DEFAULT_CHESS_GAME_BLACK_QUEEN = '\u265B';
-// const String DEFAULT_CHESS_GAME_WHITE_KING = '\u2654';
-// const String DEFAULT_CHESS_GAME_BLACK_KING = '\u265A';
   }
 }
