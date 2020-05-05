@@ -15,7 +15,6 @@ class Bishop extends Piece {
         .where((pos) =>
             board.getTile(pos).getPiece() == null ||
             board.getTile(pos).getPiece().pieceAlliance != pieceAlliance)
-        .where((pos) => board.validateMove(piecePosition, pos))
         .map((pos) => Move(
             previousCoordinate: piecePosition,
             newCoordinate: pos))

@@ -4,9 +4,9 @@ import 'package:openchess/src/chess/board/move.dart';
 import '../alliance.dart';
 
 abstract class Piece {
-  final int piecePosition;
   final Alliance pieceAlliance;
   bool initialPos = true;
+  int piecePosition;
 
   Piece({this.piecePosition, this.pieceAlliance});
 
@@ -26,5 +26,9 @@ abstract class Piece {
 
   Alliance getAlliance() {
     return pieceAlliance;
+  }
+
+  void setPiecePosition(int piecePosition) {
+    this.piecePosition = piecePosition;
   }
 }

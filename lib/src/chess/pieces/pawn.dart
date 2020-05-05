@@ -13,7 +13,6 @@ class Pawn extends Piece {
   @override
   List<Move> calculateLegalMoves(Board board) {
     return getAllPawnMovesFromCurrentPosition(board)
-        .where((pos) => board.validateMove(piecePosition, pos))
         .map((pos) => Move(
             previousCoordinate: piecePosition,
             newCoordinate: pos))

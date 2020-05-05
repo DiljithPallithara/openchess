@@ -1,7 +1,7 @@
 import 'package:openchess/src/chess/pieces/piece.dart';
 
 abstract class Tile {
-  final int tileCoordinates;
+  int tileCoordinates;
   bool isSelected;
 
   Tile({
@@ -21,6 +21,10 @@ abstract class Tile {
 
   int getTileCoordinate() {
     return tileCoordinates;
+  }
+
+  void setTileCoordinate(int tileCoordinates) {
+    this.tileCoordinates = tileCoordinates;
   }
 
   Piece getPiece();

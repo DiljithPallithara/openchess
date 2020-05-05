@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:openchess/src/chess/alliance.dart';
 import 'package:openchess/src/chess/board/empty_tile.dart';
 import 'package:openchess/src/chess/board/tile.dart';
@@ -9,7 +7,7 @@ import 'package:openchess/src/chess/pieces/knight.dart';
 import 'package:openchess/src/chess/pieces/pawn.dart';
 import 'package:openchess/src/chess/pieces/piece.dart';
 import 'package:openchess/src/chess/pieces/queen.dart';
-import 'package:openchess/src/chess/pieces/rook.dart';
+// import 'package:openchess/src/chess/pieces/rook.dart';
 import 'move.dart';
 import 'occupied_tile.dart';
 
@@ -26,7 +24,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 0,
           occupiedPiece:
-              Rook(piecePosition: 0, pieceAlliance: Alliance.WHITE),
+              Pawn(piecePosition: 0, pieceAlliance: Alliance.WHITE),
           isSelected: false,
         ),
         OccupiedTile(
@@ -68,7 +66,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 7,
           occupiedPiece:
-              Rook(piecePosition: 7, pieceAlliance: Alliance.WHITE),
+              Pawn(piecePosition: 7, pieceAlliance: Alliance.WHITE),
           isSelected: false,
         ),
       ],
@@ -312,7 +310,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 56,
           occupiedPiece:
-              Rook(piecePosition: 56, pieceAlliance: Alliance.BLACK),
+              Pawn(piecePosition: 56, pieceAlliance: Alliance.BLACK),
           isSelected: false,
         ),
         OccupiedTile(
@@ -354,7 +352,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 63,
           occupiedPiece:
-              Rook(piecePosition: 63, pieceAlliance: Alliance.BLACK),
+              Pawn(piecePosition: 63, pieceAlliance: Alliance.BLACK),
           isSelected: false,
         ),
       ],
@@ -369,10 +367,6 @@ class Board {
     return tiles[pos ~/ 8][pos % 8];
   }
 
-  bool validateMove(int piecePosition, int pos) {
-    return true;
-  }
-
   Alliance getWhoseTurn() {
     return currentTurn;
   }
@@ -384,7 +378,7 @@ class Board {
   void findAllPossibleMovesFrom(Tile tile) {
     if (currentPiece != null) {
       for (Move move in possibleMovePositions) {
-        if(move.getPreviousCordinate() == tile.getTileCoordinate()) {
+        if(move.getNewCoordinate() == tile.getTileCoordinate()) {
           makeMove(move);
           currentPiece = null;
           possibleMovePositions = [];
@@ -396,25 +390,269 @@ class Board {
     possibleMovePositions = [];
     tiles.forEach((e) => e.forEach((f) => f.setSelected(false)));
     if (tile is OccupiedTile) {
+      if (tile.getPiece().getAlliance() != currentTurn) {
+        return;
+      }
       currentPiece = tile.getPiece();
-      possibleMovePositions.addAll(tile.getPiece().calculateLegalMoves(this));
-      possibleMovePositions.where((move) => checkOtherConditions(tile)).forEach((e) => tiles[e.newCoordinate ~/ 8][e.newCoordinate % 8].setSelected(true));
+      possibleMovePositions.addAll(tile.getPiece().calculateLegalMoves(this).where((move) => validateMove(move)).toList());
+            possibleMovePositions.where((move) => checkOtherConditions(tile)).forEach((e) => tiles[e.newCoordinate ~/ 8][e.newCoordinate % 8].setSelected(true));
     }
   }
-
+      
   bool checkOtherConditions(Tile tile) {
     return tile.getPiece().getAlliance() == currentTurn;
   }
-
+      
   void makeMove(Move move) {
     int currentPos = move.getPreviousCordinate();
     int newPos = move.getNewCoordinate();
     tiles[newPos ~/ 8][newPos % 8] = tiles[currentPos ~/ 8][currentPos % 8];
+    tiles[newPos ~/ 8][newPos % 8].getPiece().setPiecePosition(newPos);
+    tiles[newPos ~/ 8][newPos % 8].getPiece().setInitialPosition(false);
+    tiles[newPos ~/ 8][newPos % 8].setTileCoordinate(newPos);
     tiles[currentPos ~/ 8][currentPos % 8] = 
         EmptyTile(
           tileCoordinates: currentPos,
           isSelected: false,
         );
+    currentTurn = currentTurn == Alliance.WHITE ? Alliance.BLACK : Alliance.WHITE;
+  }
+      
+  bool checkIfGameOver() {
+    for(List<Tile> tilesList in tiles) {
+      for(Tile tile in tilesList) {
+        if (tile is EmptyTile && tile.getPiece().getAlliance() != currentTurn) {
+          continue;
+        }
+        if (tile.getPiece().calculateLegalMoves(this).where((move) => validateMove(move)).toList() != []) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+      
+  bool isKingInCheck(Alliance alliance, List<List<int>> tilesArray) {
+    int kingPos = 0;
+    for (List<int> tilesList in tilesArray) {
+      for (int tile in tilesList) {
+        if (tile == (alliance == Alliance.WHITE ? 1 : 2)) {
+          break;
+        }
+        kingPos += 1;
+      }
+    }
+    int row = kingPos ~/ 8;
+    int column = kingPos % 8;
+    return kingCheckWithPawn(row, column, alliance, tilesArray) || kingCheckWithKnight(row, column, alliance, tilesArray) || 
+    kingCheckWithBishopOrQueen(row, column, alliance, tilesArray) || kingCheckWithRookOrQueen(row, column, alliance, tilesArray);
+  }
+      
+  bool kingCheckWithPawn(int row, int column, Alliance alliance, List<List<int>> tilesArray) {
+    int adder = alliance == Alliance.WHITE ? 1 : -1;
+    if (row + adder >= 0 && row + adder < 8) {
+      if (column - 1 >= 0 && tilesArray[row + adder][column - 1] == (alliance == Alliance.WHITE ? 4 : 3)) {
+        return true;
+      }
+      if (column + 1 < 8 && tilesArray[row + adder][column - 1] == (alliance == Alliance.WHITE ? 4 : 3)) {
+        return true;
+      }
+    }
+    return false;
+  }
+      
+  bool kingCheckWithKnight(int row, int column, Alliance alliance, List<List<int>> tilesArray) {
+    if (row + 1 < 8 && column + 2 < 8 && tilesArray[row + 1][column + 2] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    if (row + 2 < 8 && column + 1 < 8 && tilesArray[row + 2][column + 1] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    if (row + 1 < 8 && column - 2 >= 0 && tilesArray[row + 1][column - 2] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    if (row + 2 < 8 && column - 1 >= 0 && tilesArray[row + 2][column - 1] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    if (row - 1 >= 0 && column + 2 < 8 && tilesArray[row - 1][column + 2] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    if (row - 2 >= 0 && column + 1 < 8 && tilesArray[row - 2][column + 1] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    if (row - 1 >= 0 && column - 2 >= 0 && tilesArray[row - 1][column - 2] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    if (row - 2 >= 0 && column - 1 >= 0 && tilesArray[row - 2][column - 1] == (alliance == Alliance.WHITE ? 6 : 5)) {
+      return true;
+    }
+    return false;
   }
 
-}
+  bool kingCheckWithBishopOrQueen(int row, int column, Alliance alliance, List<List<int>> tilesArray) {
+    int currRow = row;
+    int currCol = column;
+    while (true) {
+      currRow++;
+      currCol++;
+      if (currRow >= 8 || currCol >= 8 || 
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[currRow][currCol] != 0) {
+        if (tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 8 : 7) || 
+        tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    currRow = row;
+    currCol = column;
+    while (true) {
+      currRow--;
+      currCol++;
+      if (currRow < 0 || currCol >= 8 || 
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[currRow][currCol] != 0) {
+        if (tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 8 : 7) || 
+        tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    currRow = row;
+    currCol = column;
+    while (true) {
+      currRow++;
+      currCol--;
+      if (currRow >= 8 || currCol < 0 || 
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[currRow][currCol] != 0) {
+        if (tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 8 : 7) || 
+        tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    currRow = row;
+    currCol = column;
+    while (true) {
+      currRow--;
+      currCol--;
+      if (currRow < 0 || currCol < 0 || 
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[currRow][currCol] != 0) {
+        if (tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 8 : 7) || 
+        tilesArray[currRow][currCol] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    return false;
+  }
+      
+  bool kingCheckWithRookOrQueen(int row, int column, Alliance alliance, List<List<int>> tilesArray) {
+    int currRow = row;
+    while (true) {
+      currRow++;
+      if (currRow >= 8 || 
+      (tilesArray[currRow][column] != 0 && tilesArray[currRow][column] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[currRow][column] != 0) {
+        if (tilesArray[currRow][column] == (alliance == Alliance.WHITE ? 10 : 9) || 
+        tilesArray[currRow][column] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    currRow = row;
+    while (true) {
+      currRow--;
+      if (currRow < 0 || 
+      (tilesArray[currRow][column] != 0 && tilesArray[currRow][column] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[currRow][column] != 0) {
+        if (tilesArray[currRow][column] == (alliance == Alliance.WHITE ? 10 : 9) || 
+        tilesArray[currRow][column] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    int currCol = column;
+    while (true) {
+      currCol--;
+      if (currCol < 0 || 
+      (tilesArray[row][currCol] != 0 && tilesArray[row][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[row][currCol] != 0) {
+        if (tilesArray[row][currCol] == (alliance == Alliance.WHITE ? 10 : 9) || 
+        tilesArray[row][currCol] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    currCol = column;
+    while (true) {
+      currCol++;
+      if (currCol >= 8 || 
+      (tilesArray[row][currCol] != 0 && tilesArray[row][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+        break;
+      }
+      if(tilesArray[row][currCol] != 0) {
+        if (tilesArray[row][currCol] == (alliance == Alliance.WHITE ? 10 : 9) || 
+        tilesArray[row][currCol] == (alliance == Alliance.WHITE ? 12 : 11)) {
+          return true;
+        }
+        break;
+      }
+    }
+    return false;
+  }
+      
+  validateMove(Move move) {
+    int currentPos = move.getPreviousCordinate();
+    int newPos = move.getNewCoordinate();
+    List<List<int>> copy = [];
+    for (List<Tile> tilesList in tiles) {
+      List<int> copyList = [];
+      for (Tile tile in tilesList) {
+        if (tile is EmptyTile) {
+          copyList.add(0);
+        } else if (tile.getPiece() is King) {
+          copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 1: 2);
+        } else if (tile.getPiece() is Pawn) {
+          copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 3 : 4);
+        } else if (tile.getPiece() is Knight) {
+          copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 5 : 6);
+        } else if (tile.getPiece() is Bishop) {
+          copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 7 : 8);
+        // } else if (tile.getPiece() is Rook) {
+        //   copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 9 : 10);
+        } else {
+          copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 11 : 12);
+        }
+      }
+      copy.add(copyList);
+    } 
+    copy[newPos ~/ 8][newPos % 8] = copy[currentPos ~/ 8][currentPos % 8];
+    copy[currentPos ~/ 8][currentPos % 8] = 0;
+    return isKingInCheck(currentTurn, copy);
+  }
+  
+  }
