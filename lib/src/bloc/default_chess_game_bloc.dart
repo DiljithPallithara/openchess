@@ -27,9 +27,6 @@ class DefaultChessGameBloc {
   void tapFunction(Tile tile) {
     board.findAllPossibleMovesFrom(tile);
     _gameStateController.add(board.getCurrentState());
-    if(board.checkIfGameOver()) {
-      board = Board();
-    }
   }
 
   void dispose() {

@@ -17,7 +17,8 @@ class Queen extends Piece {
             board.getTile(pos).getPiece().pieceAlliance != pieceAlliance)
         .map((pos) => Move(
             previousCoordinate: piecePosition,
-            newCoordinate: pos))
+            newCoordinate: pos, 
+            movedPiece: this))
         .toList();
   }
 

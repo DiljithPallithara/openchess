@@ -12,13 +12,16 @@ class Pawn extends Piece {
 
   @override
   List<Move> calculateLegalMoves(Board board) {
-    return getAllPawnMovesFromCurrentPosition(board)
+    List<Move> moves =  getAllPawnMovesFromCurrentPosition(board)
         .map((pos) => Move(
             previousCoordinate: piecePosition,
-            newCoordinate: pos))
+            newCoordinate: pos, 
+            movedPiece: this))
         .toList();
+    moves.addAll(getPawnEnPassantMove(board));
+    return moves;
   }
-
+        
   List<int> getAllPawnMovesFromCurrentPosition(Board board) {
     int row = piecePosition ~/ 8;
     int column = piecePosition % 8;
@@ -41,6 +44,33 @@ class Pawn extends Piece {
       result.add((row + adder) * 8 + column - 1);
     }
     return result;
+  }
+
+  List<Move> getPawnEnPassantMove(Board board) {
+    int row = piecePosition ~/ 8;
+    int column = piecePosition % 8;
+    List<Move> ret = [];
+    if (row != (pieceAlliance == Alliance.WHITE ? 4 : 3)) {
+      return ret;
+    }
+    if (!(board.getPreviousPlay().getMovedPiece() is Pawn)) {
+      return ret;
+    }
+    if (board.getPreviousPlay().getPreviousCoordinate() ~/ 8 != (pieceAlliance == Alliance.WHITE ? 6 : 1)) {
+      return ret;
+    }
+    if (board.getPreviousPlay().getNewCoordinate() ~/ 8 != (pieceAlliance == Alliance.WHITE ? 4 : 3)) {
+      return ret;
+    }
+    int newRow = ((board.getPreviousPlay().getNewCoordinate() ~/ 8) + (board.getPreviousPlay().getPreviousCoordinate() ~/ 8)) ~/ 2;
+    int newCol = board.getPreviousPlay().getNewCoordinate() % 8;
+    if (board.getPreviousPlay().getNewCoordinate() % 8 == column + 1 || 
+    board.getPreviousPlay().getNewCoordinate() % 8 == column - 1) {
+      Move move = new Move(movedPiece: this, previousCoordinate: piecePosition, newCoordinate: newRow * 8 + newCol);
+      move.setEnPassant(true);
+      ret.add(move);
+    }
+    return ret;
   }
 
 }

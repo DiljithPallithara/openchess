@@ -7,7 +7,7 @@ import 'package:openchess/src/chess/pieces/knight.dart';
 import 'package:openchess/src/chess/pieces/pawn.dart';
 import 'package:openchess/src/chess/pieces/piece.dart';
 import 'package:openchess/src/chess/pieces/queen.dart';
-// import 'package:openchess/src/chess/pieces/rook.dart';
+import 'package:openchess/src/chess/pieces/rook.dart';
 import 'move.dart';
 import 'occupied_tile.dart';
 
@@ -15,6 +15,7 @@ class Board {
   List<List<Tile>> tiles;
   Alliance currentTurn = Alliance.WHITE;
   Piece currentPiece;
+  Move previousPlay;
 
   List<Move> possibleMovePositions = [];
 
@@ -24,7 +25,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 0,
           occupiedPiece:
-              Pawn(piecePosition: 0, pieceAlliance: Alliance.WHITE),
+              Rook(piecePosition: 0, pieceAlliance: Alliance.WHITE),
           isSelected: false,
         ),
         OccupiedTile(
@@ -66,7 +67,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 7,
           occupiedPiece:
-              Pawn(piecePosition: 7, pieceAlliance: Alliance.WHITE),
+              Rook(piecePosition: 7, pieceAlliance: Alliance.WHITE),
           isSelected: false,
         ),
       ],
@@ -310,7 +311,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 56,
           occupiedPiece:
-              Pawn(piecePosition: 56, pieceAlliance: Alliance.BLACK),
+              Rook(piecePosition: 56, pieceAlliance: Alliance.BLACK),
           isSelected: false,
         ),
         OccupiedTile(
@@ -352,7 +353,7 @@ class Board {
         OccupiedTile(
           tileCoordinates: 63,
           occupiedPiece:
-              Pawn(piecePosition: 63, pieceAlliance: Alliance.BLACK),
+              Rook(piecePosition: 63, pieceAlliance: Alliance.BLACK),
           isSelected: false,
         ),
       ],
@@ -375,6 +376,10 @@ class Board {
     this.currentTurn = currentTurn;
   }
 
+  Move getPreviousPlay() {
+    return previousPlay;
+  }
+
   void findAllPossibleMovesFrom(Tile tile) {
     if (currentPiece != null) {
       for (Move move in possibleMovePositions) {
@@ -386,6 +391,10 @@ class Board {
           return;
         }
       }
+      currentPiece = null;
+      possibleMovePositions = [];
+      tiles.forEach((e) => e.forEach((f) => f.setSelected(false)));
+      findAllPossibleMovesFrom(tile);
     }
     possibleMovePositions = [];
     tiles.forEach((e) => e.forEach((f) => f.setSelected(false)));
@@ -404,7 +413,7 @@ class Board {
   }
       
   void makeMove(Move move) {
-    int currentPos = move.getPreviousCordinate();
+    int currentPos = move.getPreviousCoordinate();
     int newPos = move.getNewCoordinate();
     tiles[newPos ~/ 8][newPos % 8] = tiles[currentPos ~/ 8][currentPos % 8];
     tiles[newPos ~/ 8][newPos % 8].getPiece().setPiecePosition(newPos);
@@ -415,7 +424,14 @@ class Board {
           tileCoordinates: currentPos,
           isSelected: false,
         );
+    if (move.getEnpassant()) {
+      tiles[previousPlay.getNewCoordinate() ~/ 8][previousPlay.getNewCoordinate() % 8] = EmptyTile(
+          tileCoordinates: previousPlay.getNewCoordinate(),
+          isSelected: false,
+        );
+    }
     currentTurn = currentTurn == Alliance.WHITE ? Alliance.BLACK : Alliance.WHITE;
+    previousPlay = move;
   }
       
   bool checkIfGameOver() {
@@ -433,13 +449,14 @@ class Board {
   }
       
   bool isKingInCheck(Alliance alliance, List<List<int>> tilesArray) {
-    int kingPos = 0;
+    int counter = 0;
+    int kingPos;
     for (List<int> tilesList in tilesArray) {
       for (int tile in tilesList) {
         if (tile == (alliance == Alliance.WHITE ? 1 : 2)) {
-          break;
+          kingPos = counter;
         }
-        kingPos += 1;
+        counter++;
       }
     }
     int row = kingPos ~/ 8;
@@ -454,7 +471,7 @@ class Board {
       if (column - 1 >= 0 && tilesArray[row + adder][column - 1] == (alliance == Alliance.WHITE ? 4 : 3)) {
         return true;
       }
-      if (column + 1 < 8 && tilesArray[row + adder][column - 1] == (alliance == Alliance.WHITE ? 4 : 3)) {
+      if (column + 1 < 8 && tilesArray[row + adder][column + 1] == (alliance == Alliance.WHITE ? 4 : 3)) {
         return true;
       }
     }
@@ -496,7 +513,7 @@ class Board {
       currRow++;
       currCol++;
       if (currRow >= 8 || currCol >= 8 || 
-      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[currRow][currCol] != 0) {
@@ -513,7 +530,7 @@ class Board {
       currRow--;
       currCol++;
       if (currRow < 0 || currCol >= 8 || 
-      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[currRow][currCol] != 0) {
@@ -530,7 +547,7 @@ class Board {
       currRow++;
       currCol--;
       if (currRow >= 8 || currCol < 0 || 
-      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[currRow][currCol] != 0) {
@@ -547,7 +564,7 @@ class Board {
       currRow--;
       currCol--;
       if (currRow < 0 || currCol < 0 || 
-      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[currRow][currCol] != 0 && tilesArray[currRow][currCol] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[currRow][currCol] != 0) {
@@ -566,7 +583,7 @@ class Board {
     while (true) {
       currRow++;
       if (currRow >= 8 || 
-      (tilesArray[currRow][column] != 0 && tilesArray[currRow][column] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[currRow][column] != 0 && tilesArray[currRow][column] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[currRow][column] != 0) {
@@ -581,7 +598,7 @@ class Board {
     while (true) {
       currRow--;
       if (currRow < 0 || 
-      (tilesArray[currRow][column] != 0 && tilesArray[currRow][column] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[currRow][column] != 0 && tilesArray[currRow][column] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[currRow][column] != 0) {
@@ -596,7 +613,7 @@ class Board {
     while (true) {
       currCol--;
       if (currCol < 0 || 
-      (tilesArray[row][currCol] != 0 && tilesArray[row][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[row][currCol] != 0 && tilesArray[row][currCol] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[row][currCol] != 0) {
@@ -611,7 +628,7 @@ class Board {
     while (true) {
       currCol++;
       if (currCol >= 8 || 
-      (tilesArray[row][currCol] != 0 && tilesArray[row][currCol] % 1 == (alliance == Alliance.WHITE ? 1: 0))){
+      (tilesArray[row][currCol] != 0 && tilesArray[row][currCol] % 2 == (alliance == Alliance.WHITE ? 1: 0))){
         break;
       }
       if(tilesArray[row][currCol] != 0) {
@@ -626,7 +643,7 @@ class Board {
   }
       
   validateMove(Move move) {
-    int currentPos = move.getPreviousCordinate();
+    int currentPos = move.getPreviousCoordinate();
     int newPos = move.getNewCoordinate();
     List<List<int>> copy = [];
     for (List<Tile> tilesList in tiles) {
@@ -642,8 +659,8 @@ class Board {
           copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 5 : 6);
         } else if (tile.getPiece() is Bishop) {
           copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 7 : 8);
-        // } else if (tile.getPiece() is Rook) {
-        //   copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 9 : 10);
+        } else if (tile.getPiece() is Rook) {
+          copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 9 : 10);
         } else {
           copyList.add(tile.getPiece().getAlliance() == Alliance.WHITE ? 11 : 12);
         }
@@ -652,7 +669,7 @@ class Board {
     } 
     copy[newPos ~/ 8][newPos % 8] = copy[currentPos ~/ 8][currentPos % 8];
     copy[currentPos ~/ 8][currentPos % 8] = 0;
-    return isKingInCheck(currentTurn, copy);
+    return !isKingInCheck(currentTurn, copy);
   }
   
-  }
+}
