@@ -404,12 +404,8 @@ class Board {
       }
       currentPiece = tile.getPiece();
       possibleMovePositions.addAll(tile.getPiece().calculateLegalMoves(this).where((move) => validateMove(move)).toList());
-            possibleMovePositions.where((move) => checkOtherConditions(tile)).forEach((e) => tiles[e.newCoordinate ~/ 8][e.newCoordinate % 8].setSelected(true));
+      possibleMovePositions.forEach((e) => tiles[e.newCoordinate ~/ 8][e.newCoordinate % 8].setSelected(true));
     }
-  }
-      
-  bool checkOtherConditions(Tile tile) {
-    return tile.getPiece().getAlliance() == currentTurn;
   }
       
   void makeMove(Move move) {
@@ -429,6 +425,18 @@ class Board {
           tileCoordinates: previousPlay.getNewCoordinate(),
           isSelected: false,
         );
+    } else if (move.getCastling()) {
+      int currentRookPos = move.getRookCoordinate();
+      int newRookPos = (newPos > move.getRookCoordinate() ? newPos + 1 : newPos - 1);
+      tiles[newRookPos ~/ 8][newRookPos % 8] = tiles[currentRookPos ~/ 8][currentRookPos % 8];
+      tiles[newRookPos ~/ 8][newRookPos % 8].getPiece().setPiecePosition(newRookPos);
+      tiles[newRookPos ~/ 8][newRookPos % 8].getPiece().setInitialPosition(false);
+      tiles[newRookPos ~/ 8][newRookPos % 8].setTileCoordinate(newRookPos);
+      tiles[currentRookPos ~/ 8][currentRookPos % 8] = 
+          EmptyTile(
+            tileCoordinates: currentRookPos,
+            isSelected: false,
+          );
     }
     currentTurn = currentTurn == Alliance.WHITE ? Alliance.BLACK : Alliance.WHITE;
     previousPlay = move;
@@ -462,7 +470,36 @@ class Board {
     int row = kingPos ~/ 8;
     int column = kingPos % 8;
     return kingCheckWithPawn(row, column, alliance, tilesArray) || kingCheckWithKnight(row, column, alliance, tilesArray) || 
-    kingCheckWithBishopOrQueen(row, column, alliance, tilesArray) || kingCheckWithRookOrQueen(row, column, alliance, tilesArray);
+    kingCheckWithBishopOrQueen(row, column, alliance, tilesArray) || kingCheckWithRookOrQueen(row, column, alliance, tilesArray) ||
+    kingCheckWithKing(row, column, alliance, tilesArray);
+  }
+
+  bool kingCheckWithKing(int row, int column, Alliance alliance, List<List<int>> tilesArray) {
+    if (row + 1 < 8 && tilesArray[row + 1][column] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    if (column + 1 < 8 && tilesArray[row][column + 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    if (row + 1 < 8 && column + 1 < 8 && tilesArray[row + 1][column + 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    if (row - 1 >= 0 && tilesArray[row - 1][column] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    if (column - 1 >= 0 && tilesArray[row][column - 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    if (row - 1 >= 8 && column - 1 >= 0 && tilesArray[row - 1][column - 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    if (row - 1 >= 0 && column + 1 < 8 && tilesArray[row - 1][column + 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    if (row + 1 < 8 && column - 1 >= 0 && tilesArray[row + 1][column - 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
+      return true;      
+    }
+    return false;
   }
       
   bool kingCheckWithPawn(int row, int column, Alliance alliance, List<List<int>> tilesArray) {
@@ -642,7 +679,7 @@ class Board {
     return false;
   }
       
-  validateMove(Move move) {
+  bool validateMove(Move move) {
     int currentPos = move.getPreviousCoordinate();
     int newPos = move.getNewCoordinate();
     List<List<int>> copy = [];
