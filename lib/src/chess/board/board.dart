@@ -1,6 +1,8 @@
 import 'package:openchess/src/chess/alliance.dart';
 import 'package:openchess/src/chess/board/empty_tile.dart';
 import 'package:openchess/src/chess/board/tile.dart';
+import 'package:openchess/src/chess/enums/pieces_enum.dart';
+import 'package:openchess/src/chess/enums/result.dart';
 import 'package:openchess/src/chess/pieces/bishop.dart';
 import 'package:openchess/src/chess/pieces/king.dart';
 import 'package:openchess/src/chess/pieces/knight.dart';
@@ -16,10 +18,11 @@ class Board {
   Alliance currentTurn = Alliance.WHITE;
   Piece currentPiece;
   Move previousPlay;
+  Winner winner = Winner.NONE; 
 
   List<Move> possibleMovePositions = [];
 
-  Board() {
+  void setInitialTilesPosition() {
     this.tiles = [
       [
         OccupiedTile(
@@ -360,6 +363,10 @@ class Board {
     ];
   }
 
+  Board() {
+    setInitialTilesPosition();
+  }
+
   List<List<Tile>> getCurrentState() {
     return tiles;
   }
@@ -445,10 +452,10 @@ class Board {
   bool checkIfGameOver() {
     for(List<Tile> tilesList in tiles) {
       for(Tile tile in tilesList) {
-        if (tile is EmptyTile && tile.getPiece().getAlliance() != currentTurn) {
+        if (tile is EmptyTile || tile.getPiece().getAlliance() != currentTurn) {
           continue;
         }
-        if (tile.getPiece().calculateLegalMoves(this).where((move) => validateMove(move)).toList() != []) {
+        if (tile.getPiece().calculateLegalMoves(this).where((move) => validateMove(move)).toList().length != 0) {
           return false;
         }
       }
@@ -490,7 +497,7 @@ class Board {
     if (column - 1 >= 0 && tilesArray[row][column - 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
       return true;      
     }
-    if (row - 1 >= 8 && column - 1 >= 0 && tilesArray[row - 1][column - 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
+    if (row - 1 >= 0 && column - 1 >= 0 && tilesArray[row - 1][column - 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
       return true;      
     }
     if (row - 1 >= 0 && column + 1 < 8 && tilesArray[row - 1][column + 1] == (alliance == Alliance.WHITE ? 2 : 1)) {
@@ -682,6 +689,29 @@ class Board {
   bool validateMove(Move move) {
     int currentPos = move.getPreviousCoordinate();
     int newPos = move.getNewCoordinate();
+    List<List<int>> copy = createIntCopyOfTiles();
+    if (move.getCastling()) {
+      int adder = currentPos < newPos ? 1 : -1;
+      int current = currentPos + adder;
+      if (isKingInCheck(currentTurn, copy)) {
+        return false;
+      }
+      do {
+        copy[current ~/ 8][current % 8] = copy[(current - adder) ~/ 8][(current - adder) % 8];
+        copy[(current - adder) ~/ 8][(current - adder) % 8] = 0;
+        if (isKingInCheck(currentTurn, copy)) {
+          return false;
+        }
+        current += adder;
+      } while (current == newPos);
+      return true;
+    }
+    copy[newPos ~/ 8][newPos % 8] = copy[currentPos ~/ 8][currentPos % 8];
+    copy[currentPos ~/ 8][currentPos % 8] = 0;
+    return !isKingInCheck(currentTurn, copy);
+  }
+
+  List<List<int>> createIntCopyOfTiles() {
     List<List<int>> copy = [];
     for (List<Tile> tilesList in tiles) {
       List<int> copyList = [];
@@ -704,9 +734,50 @@ class Board {
       }
       copy.add(copyList);
     } 
-    copy[newPos ~/ 8][newPos % 8] = copy[currentPos ~/ 8][currentPos % 8];
-    copy[currentPos ~/ 8][currentPos % 8] = 0;
-    return !isKingInCheck(currentTurn, copy);
+    return copy;
+  }
+
+  void promotePawn(Tile tile, PiecesEnum piece) {
+    if (tile.getTileCoordinate() ~/ 8 != 0 || tile.getTileCoordinate() ~/ 8 != 7) {
+      return;
+    }
+    if (tile is EmptyTile) {
+      return;
+    }
+    if (!(tile.getPiece() is Pawn)) {
+      return;
+    }
+    Tile newTile;
+    if (piece == PiecesEnum.QUEEN) {
+      newTile = OccupiedTile(
+          tileCoordinates: tile.getTileCoordinate(),
+          occupiedPiece:
+              Queen(piecePosition: tile.getTileCoordinate(), pieceAlliance: tile.getPiece().getAlliance()),
+          isSelected: false,
+        );
+    } else if (piece == PiecesEnum.ROOK) {
+      newTile = OccupiedTile(
+          tileCoordinates: tile.getTileCoordinate(),
+          occupiedPiece:
+              Rook(piecePosition: tile.getTileCoordinate(), pieceAlliance: tile.getPiece().getAlliance()),
+          isSelected: false,
+        );
+    } else if (piece == PiecesEnum.ROOK) {
+      newTile = OccupiedTile(
+          tileCoordinates: tile.getTileCoordinate(),
+          occupiedPiece:
+              Bishop(piecePosition: tile.getTileCoordinate(), pieceAlliance: tile.getPiece().getAlliance()),
+          isSelected: false,
+        );
+    } else {
+      newTile = OccupiedTile(
+          tileCoordinates: tile.getTileCoordinate(),
+          occupiedPiece:
+              Knight(piecePosition: tile.getTileCoordinate(), pieceAlliance: tile.getPiece().getAlliance()),
+          isSelected: false,
+        );
+    } 
+    tiles[tile.getTileCoordinate() ~/ 8][tile.getTileCoordinate() % 8] = newTile;
   }
   
 }
