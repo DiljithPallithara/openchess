@@ -18,6 +18,7 @@ class Board {
   Alliance currentTurn = Alliance.WHITE;
   Piece currentPiece;
   Move previousPlay;
+  int noOfPlaysWithoutCaptureOrPawnMove = 0;
   Winner winner = Winner.NONE; 
 
   List<Move> possibleMovePositions = [];
@@ -418,6 +419,11 @@ class Board {
   void makeMove(Move move) {
     int currentPos = move.getPreviousCoordinate();
     int newPos = move.getNewCoordinate();
+    if (tiles[currentPos ~/ 8][currentPos % 8].getPiece() is Pawn || tiles[newPos ~/ 8][newPos % 8] is OccupiedTile) {
+      noOfPlaysWithoutCaptureOrPawnMove = 0;
+    } else {
+      noOfPlaysWithoutCaptureOrPawnMove++;
+    }
     tiles[newPos ~/ 8][newPos % 8] = tiles[currentPos ~/ 8][currentPos % 8];
     tiles[newPos ~/ 8][newPos % 8].getPiece().setPiecePosition(newPos);
     tiles[newPos ~/ 8][newPos % 8].getPiece().setInitialPosition(false);
