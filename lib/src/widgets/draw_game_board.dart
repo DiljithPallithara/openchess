@@ -11,6 +11,9 @@ import 'package:openchess/src/chess/pieces/pawn.dart';
 import 'package:openchess/src/chess/pieces/queen.dart';
 import 'package:openchess/src/chess/pieces/rook.dart';
 
+
+List<String> rowAlphabets = ["h","g","f","e","d","c","b","a"];
+
 class DrawGameBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -33,14 +36,14 @@ class DrawGameBoard extends StatelessWidget {
   }
 
   Table buildTable(snapshot, sizeOfBoard, gameStateBloc) {
-    int listIndex = 0;
+    int listIndex = -1;
     return Table(
       children: snapshot.data.reversed.map<TableRow>((list) {
-        listIndex += 1;
+        listIndex++;
         var elementIndex = -1;
         return TableRow(
           children: list.map<Widget>((element) {
-            elementIndex += 1;
+            elementIndex++;
             return GestureDetector(
               onTap: () => gameStateBloc.tapFunction(element),
               child:
@@ -61,26 +64,79 @@ class DrawGameBoard extends StatelessWidget {
         minWidth: sizeOfBoard,
         minHeight: sizeOfBoard,
       ),
-      child: element is EmptyTile
-          ? null
-          : Center(
-              child: Transform.rotate(
-                  angle: element.getPiece().getAlliance() == Alliance.WHITE
-                      ? 0
-                      : -pi,
-                  child: Text(
-                    getCodeFromPlaceHolder(element),
-                    style: TextStyle(
-                      fontSize: 40.0,
-                      color: Colors.black,
-                    ),
-                  ))),
-      color: element.getSelected()
-          ? Colors.orange[300]
-          : ((listIndex + elementIndex) % 2 == 0
-              ? Colors.blue
-              : Colors.blue[100]),
+      child: Stack(
+        children: <Widget>[
+          element.getSelected() ?
+          (element is EmptyTile ? Align(
+            alignment: Alignment.center,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+//                    color: Color.fromARGB(1, 100, 111, 65),
+                color: Colors.green[400],
+                shape: BoxShape.circle,
+              ),
+            ),
+          ) : Align(
+            alignment: Alignment.center,
+            child: Container(
+              color: Colors.green[400],
+              child: Container(
+                decoration: BoxDecoration(
+                    color: getColorFromIndexes(listIndex, elementIndex),
+                    borderRadius: BorderRadius.circular(sizeOfBoard)
+                ),
+              ),
+            ),
+          )
+          ) : Container(),
+           element is EmptyTile ? Container() :
+               Align(
+                 alignment: Alignment.center,
+                 child: Transform.rotate(
+                     angle: element.getPiece().getAlliance() == Alliance.WHITE
+                         ? 0
+                         : -pi,
+                     child: Text(
+                       getCodeFromPlaceHolder(element),
+                       style: TextStyle(
+                         fontSize: 40.0,
+                         color: Colors.black,
+                       ),
+                     )),
+               ),
+          listIndex == 7 ?
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              child: Text("${rowAlphabets[elementIndex].toString()}",
+                style: TextStyle(fontSize: 8,
+                    color: getColorFromIndexes(listIndex, elementIndex+1)),),
+              padding: EdgeInsets.all(2),
+            ),
+          ) : Container(),
+
+          elementIndex == 7 ?
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: EdgeInsets.all(2),
+                  child: Text(listIndex.toString(),
+                    style: TextStyle(fontSize: 8,
+                    color: getColorFromIndexes(listIndex, elementIndex+1)),),
+                ),
+              ) : Container()
+        ],
+      ),
+      color:  getColorFromIndexes(listIndex, elementIndex),
     );
+  }
+
+  Color getColorFromIndexes(int listIndex, int elementIndex){
+    return (listIndex + elementIndex) % 2 == 1
+        ? Colors.brown
+        : Colors.brown[100];
   }
 
   String getCodeFromPlaceHolder(element) {
