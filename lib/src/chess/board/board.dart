@@ -374,6 +374,10 @@ class Board {
     return tiles;
   }
 
+  List<List<String>> getNotations() {
+    return notations;
+  }
+
   Tile getTile(int pos) {
     return tiles[pos ~/ 8][pos % 8];
   }
@@ -645,7 +649,7 @@ class Board {
       while(true) {
         currentX--;
         currentY--;
-        if (currentX < 0 && currentY < 0) {
+        if (currentX < 0 || currentY < 0) {
           break;
         }
         if(currentX == srcX && currentY == srcY) {
@@ -732,7 +736,7 @@ class Board {
       while(true) {
         currentX--;
         currentY--;
-        if (currentX < 0 && currentY < 0) {
+        if (currentX < 0 || currentY < 0) {
           break;
         }
         if(currentX == srcX && currentY == srcY) {
@@ -868,7 +872,6 @@ class Board {
       notation += "+";
     }
     notations.last.add(notation);
-    print(notation);
     previousPlay = move;
   }
       
