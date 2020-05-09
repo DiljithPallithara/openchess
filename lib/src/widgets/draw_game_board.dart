@@ -5,11 +5,7 @@ import 'package:openchess/src/bloc/bloc_provider.dart';
 import 'package:openchess/src/bloc/default_chess_game_bloc.dart';
 import 'package:openchess/src/chess/alliance.dart';
 import 'package:openchess/src/chess/board/empty_tile.dart';
-import 'package:openchess/src/chess/pieces/bishop.dart';
-import 'package:openchess/src/chess/pieces/knight.dart';
-import 'package:openchess/src/chess/pieces/pawn.dart';
-import 'package:openchess/src/chess/pieces/queen.dart';
-import 'package:openchess/src/chess/pieces/rook.dart';
+import 'package:openchess/src/common/helper.dart';
 
 class DrawGameBoard extends StatelessWidget {
   @override
@@ -69,7 +65,7 @@ class DrawGameBoard extends StatelessWidget {
                       ? 0
                       : -pi,
                   child: Text(
-                    getCodeFromPlaceHolder(element),
+                    Helper.getCodeFromPiece(element.getPiece()),
                     style: TextStyle(
                       fontSize: 40.0,
                       color: Colors.black,
@@ -83,19 +79,4 @@ class DrawGameBoard extends StatelessWidget {
     );
   }
 
-  String getCodeFromPlaceHolder(element) {
-    if (element.getPiece() is Pawn) {
-      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2659' : '\u265F';
-    } else if (element.getPiece() is Knight) {
-      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2658' : '\u265E';
-    } else if (element.getPiece() is Bishop) {
-      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2657' : '\u265D';
-    }  else if (element.getPiece() is Rook) {
-      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2656' : '\u265C';
-    }  else if (element.getPiece() is Queen) {
-      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2655' : '\u265B';
-    }  else {
-      return element.getPiece().getAlliance() == Alliance.WHITE ? '\u2654' : '\u265A';
-    }
-  }
 }

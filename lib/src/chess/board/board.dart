@@ -10,6 +10,7 @@ import 'package:openchess/src/chess/pieces/pawn.dart';
 import 'package:openchess/src/chess/pieces/piece.dart';
 import 'package:openchess/src/chess/pieces/queen.dart';
 import 'package:openchess/src/chess/pieces/rook.dart';
+import 'package:openchess/src/common/helper.dart';
 import 'move.dart';
 import 'occupied_tile.dart';
 
@@ -19,7 +20,8 @@ class Board {
   Piece currentPiece;
   Move previousPlay;
   int noOfPlaysWithoutCaptureOrPawnMove = 0;
-  Winner winner = Winner.NONE; 
+  Winner winner = Winner.NONE;
+  List<List<String>> notations = [];
 
   List<Move> possibleMovePositions = [];
 
@@ -415,11 +417,418 @@ class Board {
       possibleMovePositions.forEach((e) => tiles[e.newCoordinate ~/ 8][e.newCoordinate % 8].setSelected(true));
     }
   }
+
+  String ambigousRemovalString(Move move) {
+    if (move.getMovedPiece() is King) {
+      return "";
+    }
+    int targetX = move.getNewCoordinate() ~/ 8;
+    int targetY = move.getNewCoordinate() % 8;
+    int srcX = move.getPreviousCoordinate() ~/ 8;
+    int srcY = move.getPreviousCoordinate() % 8;
+    int currentX = targetX;
+    int currentY = targetY;
+    if (move.getMovedPiece() is Pawn) {
+      if (tiles[targetX][targetY] is OccupiedTile) {
+        int adder = srcY - targetY;
+        if (tiles[srcX][srcY - adder - adder] is OccupiedTile && 
+        tiles[srcX][srcY - adder - adder].getPiece() is Pawn && 
+        tiles[srcX][srcY - adder - adder].getPiece().getAlliance() == currentTurn) {
+          return String.fromCharCode((move.getPreviousCoordinate() % 8) + ("a").codeUnitAt(0));
+        }
+        return "";
+      }
+    }
+    if (move.getMovedPiece() is Knight) {
+      if (targetX + 1 < 8 && targetY + 2 < 8 && tiles[targetX + 1][targetY + 2] is OccupiedTile && 
+      tiles[targetX + 1][targetY + 2].getPiece() is Knight && 
+      tiles[targetX + 1][targetY + 2].getPiece().getAlliance() == currentTurn &&
+      (targetX + 1 != srcX || targetY + 2 != srcY)) {
+        if (srcY != targetY + 2) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+      if (targetX + 1 < 8 && targetY - 2 >= 0 && tiles[targetX + 1][targetY - 2] is OccupiedTile && 
+      tiles[targetX + 1][targetY - 2].getPiece() is Knight && 
+      tiles[targetX + 1][targetY - 2].getPiece().getAlliance() == currentTurn && 
+      (targetX + 1 != srcX || targetY - 2 != srcY)) {
+        if (srcY != targetY - 2) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+      if (targetX - 1 >= 0 && targetY + 2 < 8 && tiles[targetX - 1][targetY + 2] is OccupiedTile && 
+      tiles[targetX - 1][targetY + 2].getPiece() is Knight && 
+      tiles[targetX - 1][targetY + 2].getPiece().getAlliance() == currentTurn && 
+      (targetX - 1 != srcX || targetY + 2 != srcY)) {
+        if (srcY != targetY + 2) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+      if (targetX - 1 >= 0 && targetY - 2 >= 0 && tiles[targetX - 1][targetY - 2] is OccupiedTile && 
+      tiles[targetX - 1][targetY - 2].getPiece() is Knight && 
+      tiles[targetX - 1][targetY - 2].getPiece().getAlliance() == currentTurn && 
+      (targetX - 1 != srcX || targetY - 2 != srcY)) {
+        if (srcY != targetY - 2) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+      if (targetX + 2 < 8 && targetY + 1 < 8 && tiles[targetX + 2][targetY + 1] is OccupiedTile && 
+      tiles[targetX + 2][targetY + 1].getPiece() is Knight && 
+      tiles[targetX + 2][targetY + 1].getPiece().getAlliance() == currentTurn && 
+      (targetX + 2 != srcX || targetY + 1 != srcY)) {
+        if (srcY != targetY + 1) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+      if (targetX + 2 < 8 && targetY - 1 >= 0 && tiles[targetX + 2][targetY - 1] is OccupiedTile && 
+      tiles[targetX + 2][targetY - 1].getPiece() is Knight && 
+      tiles[targetX + 2][targetY - 1].getPiece().getAlliance() == currentTurn && 
+      (targetX + 2 != srcX || targetY - 1 != srcY)) {
+        if (srcY != targetY - 1) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+      if (targetX - 2 >= 0 && targetY + 1 < 8 && tiles[targetX - 2][targetY + 1] is OccupiedTile && 
+      tiles[targetX - 2][targetY + 1].getPiece() is Knight && 
+      tiles[targetX - 2][targetY + 1].getPiece().getAlliance() == currentTurn && 
+      (targetX - 2 != srcX || targetY + 1 != srcY)) {
+        if (srcY != targetY + 1) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+      if (targetX - 2 >= 0 && targetY - 1 >= 0 && tiles[targetX - 2][targetY - 1] is OccupiedTile && 
+      tiles[targetX - 2][targetY - 1].getPiece() is Knight && 
+      tiles[targetX - 2][targetY - 1].getPiece().getAlliance() == currentTurn && 
+      (targetX - 2 != srcX || targetY - 1 != srcY)) {
+        if (srcY != targetY - 1) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        }
+        return (srcX + 1).toString();
+      }
+    } else if (move.getMovedPiece() is Rook) {
+      while(true) {
+        currentX++;
+        if (currentX == 8) {
+          break;
+        }
+        if(currentX == srcX) {
+          break;
+        }
+        if (tiles[currentX][targetY] is OccupiedTile && tiles[currentX][targetY].getPiece() is Rook && 
+        tiles[currentX][targetY].getPiece().getAlliance() == currentTurn) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        } else if (tiles[currentX][targetY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      while(true) {
+        currentX--;
+        if (currentX < 0) {
+          break;
+        }
+        if(currentX == srcX) {
+          break;
+        }
+        if (tiles[currentX][targetY] is OccupiedTile && tiles[currentX][targetY].getPiece() is Rook && 
+        tiles[currentX][targetY].getPiece().getAlliance() == currentTurn) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        } else if (tiles[currentX][targetY] is OccupiedTile) {
+          break;
+        }
+      }
+      while(true) {
+        currentY++;
+        if (currentY == 8) {
+          break;
+        }
+        if(currentY == srcY) {
+          break;
+        }
+        if (tiles[targetX][currentY] is OccupiedTile && tiles[targetX][currentY].getPiece() is Rook && 
+        tiles[targetX][currentY].getPiece().getAlliance() == currentTurn) {
+          return (srcX + 1).toString();
+        } else if (tiles[targetX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentY = targetY;
+      while(true) {
+        currentY--;
+        if (currentY < 0) {
+          break;
+        }
+        if(currentY == srcY) {
+          break;
+        }
+        if (tiles[targetX][currentY] is OccupiedTile && tiles[targetX][currentY].getPiece() is Rook && 
+        tiles[targetX][currentY].getPiece().getAlliance() == currentTurn) {
+          return (srcX + 1).toString();
+        } else if (tiles[targetX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+    } else if (move.getMovedPiece() is Bishop) {
+      while(true) {
+        currentX++;
+        currentY++;
+        if (currentX == 8 || currentY == 8) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Bishop && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      currentY = targetY;
+      while(true) {
+        currentX++;
+        currentY--;
+        if (currentX == 8 || currentY < 0) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Bishop && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      currentY = targetY;
+      while(true) {
+        currentX--;
+        currentY++;
+        if (currentX < 0 || currentY == 8) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Bishop && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      currentY = targetY;
+      while(true) {
+        currentX--;
+        currentY--;
+        if (currentX < 0 && currentY < 0) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Bishop && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      } 
+    } else if (move.getMovedPiece() is Queen) {
+      while(true) {
+        currentX++;
+        currentY++;
+        if (currentX == 8 || currentY == 8) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Queen && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      currentY = targetY;
+      while(true) {
+        currentX++;
+        currentY--;
+        if (currentX == 8 || currentY < 0) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Queen && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      currentY = targetY;
+      while(true) {
+        currentX--;
+        currentY++;
+        if (currentX < 0 || currentY == 8) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Queen && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      currentY = targetY;
+      while(true) {
+        currentX--;
+        currentY--;
+        if (currentX < 0 && currentY < 0) {
+          break;
+        }
+        if(currentX == srcX && currentY == srcY) {
+          break;
+        }
+        if (tiles[currentX][currentY] is OccupiedTile && tiles[currentX][currentY].getPiece() is Queen && 
+        tiles[currentX][currentY].getPiece().getAlliance() == currentTurn) {
+          if (srcY != currentY) {
+            return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+          } else {
+            return (srcX + 1).toString();
+          }
+        } else if (tiles[currentX][currentY] is OccupiedTile) {
+          break;
+        }
+      } 
+      currentX = targetX;
+      currentY = targetY;
+      while(true) {
+        currentX++;
+        if (currentX == 8) {
+          break;
+        }
+        if(currentX == srcX) {
+          break;
+        }
+        if (tiles[currentX][targetY] is OccupiedTile && tiles[currentX][targetY].getPiece() is Queen && 
+        tiles[currentX][targetY].getPiece().getAlliance() == currentTurn) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        } else if (tiles[currentX][targetY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentX = targetX;
+      while(true) {
+        currentX--;
+        if (currentX < 0) {
+          break;
+        }
+        if(currentX == srcX) {
+          break;
+        }
+        if (tiles[currentX][targetY] is OccupiedTile && tiles[currentX][targetY].getPiece() is Queen && 
+        tiles[currentX][targetY].getPiece().getAlliance() == currentTurn) {
+          return String.fromCharCode(srcY + ("a").codeUnitAt(0));
+        } else if (tiles[currentX][targetY] is OccupiedTile) {
+          break;
+        }
+      }
+      while(true) {
+        currentY++;
+        if (currentY == 8) {
+          break;
+        }
+        if(currentY == srcY) {
+          break;
+        }
+        if (tiles[targetX][currentY] is OccupiedTile && tiles[targetX][currentY].getPiece() is Queen && 
+        tiles[targetX][currentY].getPiece().getAlliance() == currentTurn) {
+          return (srcX + 1).toString();
+        } else if (tiles[targetX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+      currentY = targetY;
+      while(true) {
+        currentY--;
+        if (currentY < 0) {
+          break;
+        }
+        if(currentY == srcY) {
+          break;
+        }
+        if (tiles[targetX][currentY] is OccupiedTile && tiles[targetX][currentY].getPiece() is Queen && 
+        tiles[targetX][currentY].getPiece().getAlliance() == currentTurn) {
+          return (srcX + 1).toString();
+        } else if (tiles[targetX][currentY] is OccupiedTile) {
+          break;
+        }
+      }
+    } 
+    return "";
+  }
       
   void makeMove(Move move) {
     int currentPos = move.getPreviousCoordinate();
     int newPos = move.getNewCoordinate();
-    if (tiles[currentPos ~/ 8][currentPos % 8].getPiece() is Pawn || tiles[newPos ~/ 8][newPos % 8] is OccupiedTile) {
+    String notation;
+    if(move.getCastling()) {
+      notation = Helper.getCodeFromPiece(move.getMovedPiece()) + (currentPos > newPos ? "0-0-0" : "0-0"); 
+    } else {
+      notation = Helper.getCodeFromPiece(move.getMovedPiece()) + ambigousRemovalString(move) + 
+      (tiles[newPos ~/ 8][newPos % 8] is EmptyTile ? "" : "x") + 
+      String.fromCharCode((newPos % 8) + ("a").codeUnitAt(0)) + ((newPos ~/ 8) + 1).toString();
+    }
+    if (move.getMovedPiece() is Pawn || tiles[newPos ~/ 8][newPos % 8] is OccupiedTile) {
       noOfPlaysWithoutCaptureOrPawnMove = 0;
     } else {
       noOfPlaysWithoutCaptureOrPawnMove++;
@@ -451,7 +860,15 @@ class Board {
             isSelected: false,
           );
     }
+    if (currentTurn == Alliance.WHITE) {
+      notations.add([]);
+    }
     currentTurn = currentTurn == Alliance.WHITE ? Alliance.BLACK : Alliance.WHITE;
+    if (isKingInCheck(currentTurn, createIntCopyOfTiles())) {
+      notation += "+";
+    }
+    notations.last.add(notation);
+    print(notation);
     previousPlay = move;
   }
       
